@@ -147,7 +147,6 @@ mkdir -p "${ASSETS}/"
 
 # this loop splits files by the space
 for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
-  ASSET_NAME="${entry}"
 
   # Well, that needs explaining…  If delimiter given in `-d` does not occur in string, `cut` always returns
   #   the original string, no matter what the field `-f` specifies.
@@ -157,6 +156,7 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
   #   * `-f 2` always contains the name of the asset
   #   * `-f 3` is either the custom name of the asset,
   #   * `-f 3` is empty, and needs to be set to `-f 2`
+  entry="$(tr -d " $entry)"
   ASSET_NAME="$(echo ":${entry}" | cut -d: -f2)"
   ASSET_PATH="$(echo ":${entry}" | cut -d: -f3)"
 
