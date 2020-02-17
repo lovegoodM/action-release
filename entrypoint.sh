@@ -156,7 +156,7 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
   #   * `-f 2` always contains the name of the asset
   #   * `-f 3` is either the custom name of the asset,
   #   * `-f 3` is empty, and needs to be set to `-f 2`
-  entry="$(tr -d \" $entry)"
+  entry="$(echo $entry | tr -d \")"
   ASSET_NAME="$(echo ":${entry}" | cut -d: -f2)"
   ASSET_PATH="$(echo ":${entry}" | cut -d: -f3)"
 
@@ -189,7 +189,8 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
     fi
 
     # In any other case compress
-    tar -cf "${ASSETS}/${ASSET_NAME}.tgz"  "${file}"
+    tar -cf "${ASSETS}/${ASSET_NAME}.tgz" "${file}"
+    echo ${file}
   done
 done
 
