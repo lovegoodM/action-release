@@ -156,7 +156,7 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
   #   * `-f 2` always contains the name of the asset
   #   * `-f 3` is either the custom name of the asset,
   #   * `-f 3` is empty, and needs to be set to `-f 2`
-  entry='$(tr -d " '$entry')'
+  entry="$(tr -d \" $entry)"
   ASSET_NAME="$(echo ":${entry}" | cut -d: -f2)"
   ASSET_PATH="$(echo ":${entry}" | cut -d: -f3)"
 
