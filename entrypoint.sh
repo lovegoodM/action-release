@@ -199,14 +199,15 @@ echo "Files to be uploaded to Github:"
 ls "${ASSETS}/"
 
 ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
+echo $ASSET_ID
 if [ -n "${ASSET_ID}" ]; then
   for asset in ${ASSET_ID}; do
     CODE="$(curl -sS  -X DELETE \
     --write-out "%{http_code}" \
     -H "Authorization: token ${TOKEN}" \
     "${BASE_URL}/assets/${asset}")"
-    if [ "${CODE}" -ne "204" ]; then
-    >&2 printf "\n\tERR: Delete %s to Github release has failed\n" "${asset}"
+    if [ "${CODE}" -e "204" ]; then
+    echo "\n\tDelete %s to Github release has success\n" "${asset}"
     fi
   done
 fi
