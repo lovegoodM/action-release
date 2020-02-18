@@ -196,19 +196,21 @@ done
 
 # At this point all assets to-be-uploaded (if any), are in `${ASSETS}/` folder
 ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
-printf "Delete existing assets: %s\n===================================\n" $(echo ${ASSET_ID} | tr "\n" " ")
+printf "%s\n" $ASSET_ID
+echo $ASSET_ID
 if [ -n "${ASSET_ID}" ]; then
+  printf "Delete existing assets: %s\n===================================\n" $(echo ${ASSET_ID} | tr "\n" " ")
   for asset in ${ASSET_ID}; do
     CODE="$(curl -sS  -X DELETE \
     --write-out "%{http_code}" \
     -H "Authorization: token ${TOKEN}" \
     "${BASE_URL}/assets/${asset}")"
     if [ "${CODE}" -eq "204" ]; then
-      printf "\tDelete %s to Github release has success\n" ${asset}
+      printf "Delete %s to Github release asset has success\n" ${asset}
     fi
   done
+  echo "==================================="
 fi
-echo "==================================="
 
 
 echo "Files to be uploaded to Github:"
