@@ -197,7 +197,7 @@ done
 # At this point all assets to-be-uploaded (if any), are in `${ASSETS}/` folder
 ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
 if [ -n "${ASSET_ID}" ]; then
-  printf "Delete existing assets: %s\n===================================\n" $(echo "${ASSET_ID}" | tr "\n" " ")
+  printf "Delete existing assets: %s\n===================================\n" "$(echo "${ASSET_ID}" | tr "\n" " ")"
   for asset in ${ASSET_ID}; do
     CODE="$(curl -sS  -X DELETE \
     --write-out "%{http_code}" \
