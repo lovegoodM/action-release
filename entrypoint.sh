@@ -195,22 +195,24 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
 done
 
 # At this point all assets to-be-uploaded (if any), are in `${ASSETS}/` folder
-echo "Files to be uploaded to Github:"
-ls "${ASSETS}/"
-
 ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
-echo $ASSET_ID
-if [ -n "${ASSET_ID}" ]; then
+printf "==================\nDelete existing assets: %s\n" ${ASSET_ID}
+if [ -n ${ASSET_ID} ]; then
   for asset in ${ASSET_ID}; do
     CODE="$(curl -sS  -X DELETE \
     --write-out "%{http_code}" \
     -H "Authorization: token ${TOKEN}" \
     "${BASE_URL}/assets/${asset}")"
     if [ "${CODE}" -eq "204" ]; then
-    echo "\n\tDelete %s to Github release has success\n" "${asset}"
+    printf "\tDelete %s to Github release has success\n" ${asset}
     fi
   done
 fi
+echo "=================="
+
+
+echo "Files to be uploaded to Github:"
+ls "${ASSETS}/"
 
 UPLOAD_URL="$(echo "${BASE_URL}" | sed -e 's/api/uploads/')"
 for asset in "${ASSETS}"/*; do
