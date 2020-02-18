@@ -198,7 +198,10 @@ done
 echo "Files to be uploaded to Github:"
 ls "${ASSETS}/"
 
-UPLOAD_URL="$(echo "${BASE_URL}" | sed -e 's/api/uploads/')"
+RELEASE_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
+>&2 echo $RELEASE_ID
+
+ASSET_URL="$(echo "${BASE_URL}" | sed -e 's/api/uploads/')"
 
 for asset in "${ASSETS}"/*; do
   FILE_NAME="$(basename "${asset}")"
@@ -209,7 +212,7 @@ for asset in "${ASSETS}"/*; do
     -H "Content-Length: $(stat -c %s "${asset}")" \
     -H "Content-Type: $(file -b --mime-type "${asset}")" \
     --upload-file "${asset}" \
-    "${UPLOAD_URL}/${RELEASE_ID}/assets?name=${FILE_NAME}")"
+    "${ASSET_URL}/${RELEASE_ID}/assets?name=${FILE_NAME}")"
 
   if [ "${CODE}" -ne "201" ]; then
     >&2 printf "\n\tERR: Uploading %s to Github release has failed\n" "${FILE_NAME}"
