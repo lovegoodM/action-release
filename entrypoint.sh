@@ -206,7 +206,7 @@ if [ -n "${ASSET_ID}" ]; then
     --write-out "%{http_code}" \
     -H "Authorization: token ${TOKEN}" \
     "${BASE_URL}/assets/${asset}")"
-    if [ "${CODE}" -e "204" ]; then
+    if [ "${CODE}" -eq "204" ]; then
     echo "\n\tDelete %s to Github release has success\n" "${asset}"
     fi
   done
