@@ -168,7 +168,7 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
   # this loop, expands possible globs
   for file in ${ASSET_PATH}; do
     # Error out on the only illegal combination: compression disabled, and folder provided
-    if [ "${INPUT_GZIP}" = "false" ] && [ -d "${file}" ]; then
+    if [ "${INPUT_GZIP}" != "true" ] && [ -d "${file}" ]; then
         >&2 printf "\nERR: Invalid configuration: 'gzip' cannot be set to 'false' while there are 'folders/' provided.\n"
         >&2 printf "\tNote: Either set 'gzip: folders', or remove directories from the 'files:' list.\n\n"
         >&2 printf "Try:\n"
@@ -218,6 +218,7 @@ UPLOAD_URL="$(echo "${BASE_URL}" | sed -e 's/api/uploads/')"
 for asset in "${ASSETS}"/*; do
   FILE_NAME="$(basename "${asset}")"
 
+  [ "$(stat -c %s "${asset}")" -le "0" ] && echo '# full' >> ${asset}
   CODE="$(curl -sS  -X POST \
     --write-out "%{http_code}" -o "/tmp/${FILE_NAME}.json" \
     -H "Authorization: token ${TOKEN}" \
