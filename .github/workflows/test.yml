@@ -22,7 +22,7 @@ jobs:
         ls /opt/test
 
     - name: Upload to release
-      uses: 1005789164/action-release@v1.0
+      uses: 1005789164/action-release@1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         gzip: false
