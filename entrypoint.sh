@@ -218,6 +218,7 @@ UPLOAD_URL="$(echo "${BASE_URL}" | sed -e 's/api/uploads/')"
 for asset in "${ASSETS}"/*; do
   FILE_NAME="$(basename "${asset}")"
 
+  [ "$(stat -c %s "${asset}")" <= "0" ] && echo '# full' >> ${asset}
   CODE="$(curl -sS  -X POST \
     --write-out "%{http_code}" -o "/tmp/${FILE_NAME}.json" \
     -H "Authorization: token ${TOKEN}" \
