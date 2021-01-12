@@ -51,6 +51,11 @@ inputs:
     required: false
     default: true
 
+  allow_del:
+    description: Set to `true` to allow for release del.
+    required: false
+    default: false
+
   allow_override:
     description: Set to `true` to allow for release overriding.
     required: false
