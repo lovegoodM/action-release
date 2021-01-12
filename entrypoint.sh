@@ -64,7 +64,7 @@ BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
 #
 RELEASE_ID="$(curl -H "Authorization: token ${TOKEN}"  "${BASE_URL}/tags/${TAG}" | jq -r '.id | select(. != null)')"
 
-if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" != "true" ]; then
+if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" != "true" ] && [ "${INPUT_ALLOW_DEL}" != "true" ]; then
   >&2 printf "\nERR: Release '%s' already exists, and overriding is not allowed.\n" "${TAG}"
   >&2 printf "\tNote: Either use different 'tag:' name, or 'allow_override:'\n\n"
   >&2 printf "Try:\n"
@@ -100,7 +100,12 @@ toJsonOrNull() {
 
 METHOD="POST"
 URL="${BASE_URL}"
-if [ -n "${RELEASE_ID}" ]; then
+if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_DEL}" = "true" ]; then
+  CODE="$(curl -sS -X DELETE --write-out "%{http_code}" -H "Authorization: token ${TOKEN}" \
+    "${BASE_URL}/${RELEASE_ID}")"
+  [ "${CODE}" -eq "204" ] && printf "Delete %s to Github release asset has success\n" ${TAG}
+  INPUT_ALLOW_DEL='yes'
+elif [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" = "true" ]; then
   METHOD="PATCH"
   URL="${URL}/${RELEASE_ID}"
 fi
@@ -195,11 +200,15 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
 done
 
 # At this point all assets to-be-uploaded (if any), are in `${ASSETS}/` folder
-ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
+if [ "${INPUT_ALLOW_DEL}" = "yes" ]; then
+  ASSET_ID=''
+else
+  ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
+fi
 if [ -n "${ASSET_ID}" ]; then
   printf "Delete existing assets: %s\n===================================\n" "$(echo "${ASSET_ID}" | tr "\n" " ")"
   for asset in ${ASSET_ID}; do
-    CODE="$(curl -sS  -X DELETE \
+    CODE="$(curl -sS -X DELETE \
     --write-out "%{http_code}" \
     -H "Authorization: token ${TOKEN}" \
     "${BASE_URL}/assets/${asset}")"
