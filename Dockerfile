@@ -1,7 +1,9 @@
-FROM alpine:3.11
+FROM alpine:latest
 
-RUN apk add --no-cache file curl jq
+RUN apk add --no-cache file curl jq sed grep
 
 COPY entrypoint.sh /
+
+RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT [ "/entrypoint.sh" ]

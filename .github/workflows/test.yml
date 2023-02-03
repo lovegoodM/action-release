@@ -1,10 +1,5 @@
 on:
   workflow_dispatch:
-    inputs:
-      run:
-        description: 'start run'
-        required: false
-        default: 'true'
 
 jobs:
   check-steps:
@@ -28,7 +23,6 @@ jobs:
     - name: test
       uses: ./
       with:
-        token: ${{ secrets.TEST_TOKEN }}
         gzip: false
         files: >
           test/*
