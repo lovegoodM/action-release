@@ -34,9 +34,8 @@ jobs:
         touch some1 some2 some3
 
     - name: Upload to release for test
-      uses: 1005789164/action-release@js
+      uses: ./
       with:
-        token: ${{ secrets.ACTION_TOKEN }}
         tag: test
         gzip: false
         files: >
@@ -49,4 +48,3 @@ jobs:
       with:
         retain_days: 7
         keep_minimum_runs: 1
-

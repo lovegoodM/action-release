@@ -10,6 +10,7 @@ inputs:
   token:
     description: Github API token to be used.  Quite crucial, I'm afraid.
     required: true
+    default: ${{ github.token }}
 
   tag:
     description: >

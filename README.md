@@ -44,19 +44,19 @@ steps:
 
 All inputs are available as a _normal_ Action input, but because Github Actions don't accept shell variables there, some are also available as an Environment Variable set beforehand.  When both set, one set as input takes precedence.
 
-| name             | ENV var alternative | required   | description
-|:----------------:|:-------------------:|:----------:|----------------
-| `token`          | -                   | **always** | Github Access token.  Can be accessed by using `${{secrets.GITHUB_TOKEN}}` in the workflow file.
-| `tag`            | `RELEASE_TAG`       | sometimes  | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set. For tags constructed dynamically, use `RELEASE_TAG` env var.
-| `commitish`      | -                   | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
-| `name`           | `RELEASE_NAME`      | no         | Place to name the release, the more creative, the better. Defaults to the name of the tag used. [more]
-| `body`           | -                   | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
+| name             | ENV var alternative or github context or default | required   | description
+|:----------------:|:----------------:|:----------------:|----------------
+| `token`          | `${{ github.token }}` | **always** | Github Access token.  Can be accessed by using `${{secrets.GITHUB_TOKEN}}` in the workflow file.
+| `tag`            | `RELEASE_TAG`       | sometimes | If triggered by git tag push, tag is picked up automatically.  Otherwise `tag:` has to be set. For tags constructed dynamically, use `RELEASE_TAG` env var.
+| `commitish`     | -                   | no         | Commit hash this release should point to.  Unnecessary, if `tag` is a git tag.  Otherwise, current `master` is used. [more]
+| `name`          | `RELEASE_NAME`     | no        | Place to name the release, the more creative, the better. Defaults to the name of the tag used. [more]
+| `body`           | -                  | no         | Place to put a longer description of the release, ex changelog, or info about contributors.  Defaults to the commit message of the reference commit. [more]
 | `draft`          | -                   | no         | Set to `true` to create a release, but not publish it. `false` by default. [more]
 | `prerelease`     | -                   | no         | Marks this release as a pre-release. `false` by default. [more]
-| `files`          | `RELEASE_FILES`     | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
-| `gzip`           | -                   | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
-| `allow_del`      | -                   | no        | Allow delete of release, if one with the same tag already exists.  Defaults to `false`
-| `allow_override` | -                   | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
+| `files`          | `RELEASE_FILES`      | no         | A **space-separated** list of files to be uploaded. When left empty, no files are uploaded. [More on files below]
+| `gzip`           | `true`              | no         | Set whether to `gzip` uploaded assets, or not.  Available options are: `true`, `false`, and `folders` which uploads files unchanged, but compresses directories/folders.  Defaults to `true`.  Note: it errors if set to `false`, and `files:` argument contains path to a directory.
+| `allow_del`      | `false`              | no        | Allow delete of release, if one with the same tag already exists.  Defaults to `false`
+| `allow_override` | `false`              | no        | Allow override of release, if one with the same tag already exists.  Defaults to `false`
 
 [more]: https://developer.github.com/v3/repos/releases/#create-a-release
 [More on files below]: #Files-syntax
