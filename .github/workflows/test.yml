@@ -1,0 +1,45 @@
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'start run'
+        required: false
+        default: 'true'
+
+jobs:
+  check-steps:
+    name: test
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@main
+
+    - name: sh
+      run: |
+        mkdir test test2
+        touch test/123 test/456 test2/abc test2/def
+        touch aaa bbb
+        env
+        echo '${{ toJSON(job) }}'
+        echo '${{ toJSON(runner) }}'
+        echo '${{ toJSON(github) }}'
+        echo "RELEASE_TAG=test" >> $GITHUB_ENV
+        echo "CDIR=$(pwd)" >> $GITHUB_ENV
+
+    - name: test
+      uses: ./
+      with:
+        token: ${{ secrets.TEST_TOKEN }}
+        gzip: false
+        files: >
+          test/*
+          aaa
+          test2/*
+          ${{ env.CDIR }}/bbb
+        allow_del: true
+        allow_override: true
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 1

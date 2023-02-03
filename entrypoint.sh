@@ -2,6 +2,10 @@
 
 set -e
 
+printf '%d args: "%s"\n' "$#" "$@"
+echo "RUNNER_WORKSPACE: $RUNNER_WORKSPACE"
+echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+
 #
 # Input verification
 #
@@ -62,7 +66,7 @@ BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
 #
 ## Check for Github Release existence
 #
-RELEASE_ID="$(curl -H "Authorization: token ${TOKEN}"  "${BASE_URL}/tags/${TAG}" | jq -r '.id | select(. != null)')"
+RELEASE_ID="$(curl -sS -H "Authorization: Bearer ${TOKEN}"  "${BASE_URL}" | jq -r --arg TAG ${TAG} '.[] | select(.tag_name == $TAG) | .id')"
 
 if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" != "true" ] && [ "${INPUT_ALLOW_DEL}" != "true" ]; then
   >&2 printf "\nERR: Release '%s' already exists, and overriding is not allowed.\n" "${TAG}"
@@ -74,10 +78,13 @@ if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" != "true" ] && [ "${INP
   >&2 printf "\t  allow_override: true\n"
   exit 1
 fi
+[ -n "${RELEASE_ID}" ] && printf "\nRELEASE_ID: %d\n" "$RELEASE_ID"
 
 # If no `name:` passed as input, but RELEASE_NAME env var is set, use it as the name
 if [ -z "${INPUT_NAME}" ] && [ -n "${RELEASE_NAME}" ]; then
   INPUT_NAME="${RELEASE_NAME}"
+else
+  INPUT_NAME="${TAG}"
 fi
 
 #
@@ -101,7 +108,7 @@ toJsonOrNull() {
 METHOD="POST"
 URL="${BASE_URL}"
 if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_DEL}" = "true" ]; then
-  CODE="$(curl -sS -X DELETE --write-out "%{http_code}" -H "Authorization: token ${TOKEN}" \
+  CODE="$(curl -sS -X DELETE --write-out "%{http_code}" -H "Authorization: Bearer ${TOKEN}" \
     "${BASE_URL}/${RELEASE_ID}")"
   [ "${CODE}" -eq "204" ] && printf "Delete %s to Github release asset has success\n" ${TAG}
   INPUT_ALLOW_DEL='yes'
@@ -119,14 +126,14 @@ CODE="$(jq -nc \
   --argjson draft             "$(toJsonOrNull "${INPUT_DRAFT}")"      \
   --argjson prerelease        "$(toJsonOrNull "${INPUT_PRERELEASE}")" \
   '{$tag_name, $target_commitish, $name, $body, $draft, $prerelease} | del(.[] | nulls)' | \
-  curl -s -X "${METHOD}" -d @- \
+  curl -sS -X "${METHOD}" -d @- \
   --write-out "%{http_code}" -o "/tmp/${METHOD}.json" \
-  -H "Authorization: token ${TOKEN}" \
-  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Accept: application/json" \
   "${URL}")"
 
 if [ "${CODE}" != "200" ] && [ "${CODE}" != "201" ]; then
-  >&2 printf "\n\tERR: %s to Github release has failed\n" "${METHOD}"
+  >&2 printf "\nERR: %s to Github release has failed\n" "${METHOD}"
   >&2 jq < "/tmp/${METHOD}.json"
   exit 1
 fi
@@ -170,6 +177,12 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
     ASSET_PATH="${entry}"
   fi
 
+  if [ -n "$(echo "$ASSET_PATH" | grep -e "^${RUNNER_WORKSPACE}/$(basename $RUNNER_WORKSPACE)/")" ]; then
+    printf "del GITHUB_WORKSPACE path: %s " "$ASSET_PATH"
+    ASSET_PATH=$(echo "$ASSET_PATH" | sed "s#^${RUNNER_WORKSPACE}/$(basename $RUNNER_WORKSPACE)/##g")
+    printf "%s\n" "$ASSET_PATH"
+  fi
+
   # this loop, expands possible globs
   for file in ${ASSET_PATH}; do
     # Error out on the only illegal combination: compression disabled, and folder provided
@@ -206,11 +219,12 @@ else
   ASSET_ID="$(jq '.assets[].id' < "/tmp/${METHOD}.json")"
 fi
 if [ -n "${ASSET_ID}" ]; then
-  printf "Delete existing assets: %s\n===================================\n" "$(echo "${ASSET_ID}" | tr "\n" " ")"
+  echo "==================================="
+  printf "Delete existing assets: %s\n" "$(jq '.assets[].name' < "/tmp/${METHOD}.json" | tr "\n" " ")"
   for asset in ${ASSET_ID}; do
     CODE="$(curl -sS -X DELETE \
     --write-out "%{http_code}" \
-    -H "Authorization: token ${TOKEN}" \
+    -H "Authorization: Bearer ${TOKEN}" \
     "${BASE_URL}/assets/${asset}")"
     if [ "${CODE}" -eq "204" ]; then
       printf "Delete %s to Github release asset has success\n" ${asset}
@@ -230,14 +244,14 @@ for asset in "${ASSETS}"/*; do
   [ "$(stat -c %s "${asset}")" -le "0" ] && echo '# flush' >> ${asset}
   CODE="$(curl -sS  -X POST \
     --write-out "%{http_code}" -o "/tmp/${FILE_NAME}.json" \
-    -H "Authorization: token ${TOKEN}" \
+    -H "Authorization: Bearer ${TOKEN}" \
     -H "Content-Length: $(stat -c %s "${asset}")" \
     -H "Content-Type: $(file -b --mime-type "${asset}")" \
     --upload-file "${asset}" \
     "${UPLOAD_URL}/${RELEASE_ID}/assets?name=${FILE_NAME}")"
 
   if [ "${CODE}" -ne "201" ]; then
-    >&2 printf "\n\tERR: Uploading %s to Github release has failed\n" "${FILE_NAME}"
+    >&2 printf "\nERR: Uploading %s to Github release has failed\n" "${FILE_NAME}"
     jq < "/tmp/${FILE_NAME}.json"
     exit 1
   fi
