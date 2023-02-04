@@ -5,6 +5,10 @@ set -e
 printf '%d args: "%s"\n' "$#" "$@"
 echo "RUNNER_WORKSPACE: $RUNNER_WORKSPACE"
 echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+echo "pwd: `pwd`"
+echo 'ls -al:'
+ls -al
+echo ''
 
 #
 # Input verification
@@ -78,7 +82,7 @@ if [ -n "${RELEASE_ID}" ] && [ "${INPUT_ALLOW_OVERRIDE}" != "true" ] && [ "${INP
   >&2 printf "\t  allow_override: true\n"
   exit 1
 fi
-[ -n "${RELEASE_ID}" ] && printf "\nRELEASE_ID: %d\n" "$RELEASE_ID"
+[ -n "${RELEASE_ID}" ] && printf "RELEASE_ID: %d\n" "$RELEASE_ID"
 
 # If no `name:` passed as input, but RELEASE_NAME env var is set, use it as the name
 if [ -z "${INPUT_NAME}" ] && [ -n "${RELEASE_NAME}" ]; then
@@ -185,6 +189,13 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
 
   # this loop, expands possible globs
   for file in ${ASSET_PATH}; do
+    # Just copy files, if compression not enabled for all
+    if [ "${INPUT_GZIP}" != "true" ] && [ -f "${file}" ]; then
+      cp "${file}" "${ASSETS}/${ASSET_NAME}"
+      continue
+    fi
+
+:<<-comment
     # Error out on the only illegal combination: compression disabled, and folder provided
     if [ "${INPUT_GZIP}" != "true" ] && [ -d "${file}" ]; then
         >&2 printf "\nERR: Invalid configuration: 'gzip' cannot be set to 'false' while there are 'folders/' provided.\n"
@@ -199,16 +210,14 @@ for entry in $(echo "${INPUT_FILES}" | tr ' ' '\n'); do
         >&2 printf "\t    my-artifacts/\n"
         exit 1
     fi
-
-    # Just copy files, if compression not enabled for all
-    if [ "${INPUT_GZIP}" != "true" ] && [ -f "${file}" ]; then
-      cp "${file}" "${ASSETS}/${ASSET_NAME}"
+comment
+    if [ "${INPUT_GZIP}" != "true" ] && [ -d "${file}" ] && [ "${INPUT_DIR}" != "true" ]; then
       continue
     fi
 
     # In any other case compress
     tar -cf "${ASSETS}/${ASSET_NAME}.tgz" "${file}"
-    echo ${file}
+    echo "tar: ${file}"
   done
 done
 

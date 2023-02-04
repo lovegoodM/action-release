@@ -13,17 +13,21 @@ jobs:
         mkdir test test2
         touch test/123 test/456 test2/abc test2/def
         touch aaa bbb
+        mkdir test/test_ test/test_2
+        touch test/test_2/111
+        echo "RELEASE_TAG=test" >> $GITHUB_ENV
+        echo "CDIR=$(pwd)" >> $GITHUB_ENV
+
         env
         echo '${{ toJSON(job) }}'
         echo '${{ toJSON(runner) }}'
         echo '${{ toJSON(github) }}'
-        echo "RELEASE_TAG=test" >> $GITHUB_ENV
-        echo "CDIR=$(pwd)" >> $GITHUB_ENV
 
     - name: test
       uses: ./
       with:
         gzip: false
+        dir: true
         files: >
           test/*
           aaa
