@@ -52,6 +52,11 @@ inputs:
     required: false
     default: true
 
+  dir:
+    description: Compress and upload folder when gzip is false.
+    required: false
+    default: false
+
   allow_del:
     description: Set to `true` to allow for release del.
     required: false

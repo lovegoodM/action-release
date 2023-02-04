@@ -1,50 +1,52 @@
-name: TEST
-
 on:
-#  release:
-#    types: [published]
-#  push:
-#    branches:
-#    - master
-#    paths:
-#    - '.config'
-#  schedule:
-#    - cron: 0 23 * * 5
-  watch:
-    types: [started]
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    if: github.event.repository.owner.id == github.event.sender.id
-    
+  check-steps:
+    name: test
+    runs-on: ubuntu-20.04
     steps:
-    - name: Checkout
-      uses: actions/checkout@main
+    - uses: actions/checkout@main
 
     - name: Initialization environment
       run: |
         sudo -E apt-get -qq update
         sudo -E apt-get -qq install jq
 
-    - name: Touch something
+    - name: sh
       run: |
-        mkdir some
-        cd some
-        touch some1 some2 some3
+        mkdir test test2
+        touch test/123 test/456 test2/abc test2/def
+        touch aaa bbb
+        mkdir test/test_ test/test_2
+        touch test/test_2/111
+        echo "RELEASE_TAG=test" >> $GITHUB_ENV
+        echo "CDIR=$(pwd)" >> $GITHUB_ENV
 
-    - name: Upload to release for test
+        echo '=============================='
+        env
+        echo '=============================='
+        echo '${{ toJSON(job) }}'
+        echo '=============================='
+        echo '${{ toJSON(runner) }}'
+        echo '=============================='
+        echo '${{ toJSON(github) }}'
+
+    - name: test
       uses: ./
       with:
-        tag: test
         gzip: false
+        dir: true
         files: >
-          some/*
+          test/*
+          aaa
+          test2/*
+          ${{ env.CDIR }}/bbb
         allow_del: true
         allow_override: true
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
-        retain_days: 7
+        retain_days: 1
         keep_minimum_runs: 1
