@@ -18,9 +18,13 @@ jobs:
         echo "RELEASE_TAG=test" >> $GITHUB_ENV
         echo "CDIR=$(pwd)" >> $GITHUB_ENV
 
+        echo '=============================='
         env
+        echo '=============================='
         echo '${{ toJSON(job) }}'
+        echo '=============================='
         echo '${{ toJSON(runner) }}'
+        echo '=============================='
         echo '${{ toJSON(github) }}'
 
     - name: test
